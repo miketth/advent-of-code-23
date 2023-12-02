@@ -1,7 +1,9 @@
 defmodule Aoc23 do
   def start(_type, _args) do
-    First.solve()
-    First.solve_plus()
+    first = First.solve()
+    IO.puts("First part: #{first}")
+    plus = First.solve_plus()
+    IO.puts("Second part: #{plus}")
     {:ok, self()}
   end
 end

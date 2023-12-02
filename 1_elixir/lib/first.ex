@@ -3,7 +3,6 @@ defmodule First do
     File.stream!("inputs/first")
     |> Enum.map(&process_line/1)
     |> Enum.sum()
-    |> IO.puts()
   end
 
   def process_line(line) do
@@ -21,7 +20,6 @@ defmodule First do
     File.stream!("inputs/first")
     |> Enum.map(&process_line_plus/1)
     |> Enum.sum()
-    |> IO.puts()
   end
 
   def process_line_plus(line) do
