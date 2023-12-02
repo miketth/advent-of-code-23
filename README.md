@@ -1,4 +1,4 @@
-[![Build Status](https://app.bitrise.io/app/4cc7e9cd-4fa9-4ddc-b504-f505ad94c178/status.svg?token=zcX255P8TbhL3DvebAuoPA&branch=master)](https://app.bitrise.io/app/4cc7e9cd-4fa9-4ddc-b504-f505ad94c178)
+[![Build Status](https://app.bitrise.io/app/4cc7e9cd-4fa9-4ddc-b504-f505ad94c178/status.svg?token=zcX255P8TbhL3DvebAuoPA&branch=main)](https://app.bitrise.io/app/4cc7e9cd-4fa9-4ddc-b504-f505ad94c178)
 
 # Advent of Code '23 solutions
 
