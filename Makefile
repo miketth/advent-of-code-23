@@ -18,4 +18,7 @@ endef
 setup_ci:
 	$(foreach day, $(days), $(call setup_ci_day,$(day)) )
 
-ci: setup_ci run
+setup_ci_pre:
+	apt update
+
+ci: setup_ci_pre setup_ci run
