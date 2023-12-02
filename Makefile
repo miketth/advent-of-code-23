@@ -1,6 +1,6 @@
 .PHONY: run
 
-days=1_elixir
+days=1_elixir 2_nix
 
 define run_day
 	@echo "Running $(1)"
