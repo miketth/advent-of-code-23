@@ -15,10 +15,10 @@ define setup_ci_day
 	@$(MAKE) -C $(1) setup_ci
 endef
 
-setup_ci:
+setup_ci: setup_ci_pre
 	$(foreach day, $(days), $(call setup_ci_day,$(day)) )
 
 setup_ci_pre:
 	apt update
 
-ci: setup_ci_pre setup_ci run
+ci: setup_ci run
