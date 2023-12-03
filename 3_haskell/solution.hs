@@ -56,22 +56,22 @@ processLinesNum (line:rest) y =
   in processed ++ more
 
 
-findSymbolsInLineNum :: String -> Int -> Int -> [(Int, Int)]
+findSymbolsInLineNum :: String -> Int -> Int -> [(Char, (Int, Int))]
 findSymbolsInLineNum [] _ _ = []
 findSymbolsInLineNum ('.':rest) x y = findSymbolsInLineNum rest (x + 1) y
 findSymbolsInLineNum (char:rest) x y =
   let more = findSymbolsInLineNum rest (x + 1) y
   in if isDigit char
      then more
-     else ((x, y) : more)
+     else ((char, (x, y)) : more)
 
-findSymbolsInLine :: String -> Int -> [(Int, Int)]
+findSymbolsInLine :: String -> Int -> [(Char, (Int, Int))]
 findSymbolsInLine line y = findSymbolsInLineNum line 0 y
 
-findSymbols :: [String] -> [(Int, Int)]
+findSymbols :: [String] -> [(Char, (Int, Int))]
 findSymbols lines = findSymbolsNum lines 0
 
-findSymbolsNum :: [String] -> Int -> [(Int, Int)]
+findSymbolsNum :: [String] -> Int -> [(Char, (Int, Int))]
 findSymbolsNum [] _ = []
 findSymbolsNum (line:rest) y =
   let symbols = findSymbolsInLine line y
@@ -92,20 +92,18 @@ mapNumberToInt :: (Int, [(Int, Int)]) -> Int
 mapNumberToInt (n, _) = n
 
 mapNumbersToInts :: [(Int, [(Int, Int)])] -> [Int]
-mapNumbersToInts numbers = map mapNumberToInt numbers
+mapNumbersToInts numbers = map (\(n, _) -> n) numbers
 
-printNumbersLineByLine :: [Int] -> IO()
-printNumbersLineByLine [] = return ()
-printNumbersLineByLine (n:rest) = do
-  print n
-  printNumbersLineByLine rest
+symbolsToCoords :: [(Char, (Int, Int))] -> [(Int, Int)]
+symbolsToCoords symbols = map (\(_, pos) -> pos) symbols
 
 main :: IO()
 main = do
   input <- readInput
   let processed = processLines input
   let symbols = findSymbols input
-  let filtered = filterNumbersWithSymbolMatches processed symbols
+  let symbolsCoords = symbolsToCoords symbols
+  let filtered = filterNumbersWithSymbolMatches processed symbolsCoords
   let mapped = mapNumbersToInts filtered
   let sum = foldl (+) 0 mapped
   print sum
