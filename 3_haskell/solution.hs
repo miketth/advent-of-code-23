@@ -97,6 +97,30 @@ mapNumbersToInts numbers = map (\(n, _) -> n) numbers
 symbolsToCoords :: [(Char, (Int, Int))] -> [(Int, Int)]
 symbolsToCoords symbols = map (\(_, pos) -> pos) symbols
 
+filterGears :: [(Char, (Int, Int))] -> [(Char, (Int, Int))]
+filterGears symbols = filter (\(c, _) -> c == '*') symbols
+
+findNumbersForSymbol :: [(Int, [(Int, Int)])] -> (Int, Int) -> [Int]
+findNumbersForSymbol numbers (x, y) =
+  let matches = filter (\(n, pos) -> elem (x, y) pos) numbers
+  in map (\(n, _) -> n) matches
+
+findGearRatio :: [(Int, [(Int, Int)])] -> (Int, Int) -> Maybe Int
+findGearRatio numbers (x, y) =
+  let numbersForSymbol = findNumbersForSymbol numbers (x, y)
+  in if length numbersForSymbol == 2
+     then let [one, two] = numbersForSymbol in Just (one * two)
+     else Nothing
+
+findGearRatios :: [(Int, [(Int, Int)])] -> [(Int, Int)] -> [Maybe Int]
+findGearRatios numbers symbols =
+  map (\(x, y) -> findGearRatio numbers (x, y)) symbols
+
+filterValidGearRatios :: [Maybe Int] -> [Int]
+filterValidGearRatios ratios =
+  let filtered = filter (\x -> x /= Nothing) ratios
+  in map (\(Just x) -> x) filtered
+
 main :: IO()
 main = do
   input <- readInput
@@ -106,4 +130,11 @@ main = do
   let filtered = filterNumbersWithSymbolMatches processed symbolsCoords
   let mapped = mapNumbersToInts filtered
   let sum = foldl (+) 0 mapped
-  print sum
+  putStrLn ("First part:  " ++ show sum)
+
+  let gears = filterGears symbols
+  let gearsCoords = symbolsToCoords gears
+  let ratios = findGearRatios processed gearsCoords
+  let validRatios = filterValidGearRatios ratios
+  let sumRatios = foldl (+) 0 validRatios
+  putStrLn ("Second part: " ++ show sumRatios)
