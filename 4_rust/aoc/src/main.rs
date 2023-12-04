@@ -4,16 +4,41 @@ use std::io::{self, BufRead, BufReader};
 fn main() -> io::Result<()> {
     let reader = read_file().unwrap();
 
-    let data = reader.lines()
+    let data: Vec<Linedata> = reader.lines()
         .map(|line| line.unwrap())
         .filter(|line| !line.trim().is_empty())
-        .map(|line| process_line(line));
+        .map(|line| process_line(line))
+        .collect();
 
     let first_sol: u64 = data
+        .iter()
         .map(|data| data.get_points())
         .sum();
 
     println!("First part: {}", first_sol);
+
+    let nextids: Vec<Vec<u64>> = data.iter()
+        .map(|card| card.get_next_ids())
+        .collect();
+
+    let mut ids: Vec<u64> = data.iter()
+        .map(|card| card.id)
+        .collect();
+
+    let mut all_ids = ids.clone();
+
+    while !ids.is_empty() {
+        ids = ids.iter()
+            .map(|id| nextids[(id-1) as usize].clone())
+            .flatten()
+            .collect();
+
+        all_ids.extend(ids.clone());
+    }
+
+    let second_sol = all_ids.iter().len();
+
+    println!("Second part: {}", second_sol);
 
     Ok(())
 }
@@ -25,6 +50,7 @@ fn read_file() -> io::Result<BufReader<File>> {
 }
 
 #[derive(Debug)]
+#[derive(Clone)]
 struct Linedata {
     id: u64,
     winning: Vec<u64>,
@@ -77,5 +103,12 @@ impl Linedata {
         } else {
             2_u64.pow((wins - 1) as u32)
         }
+    }
+
+    fn get_next_ids(&self) -> Vec<u64> {
+        let wins = self.get_winning_nums().len();
+        (0..wins)
+            .map(|id| (id as u64) + self.id + 1)
+            .collect()
     }
 }
