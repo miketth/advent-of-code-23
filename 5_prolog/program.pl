@@ -114,8 +114,43 @@ lowest([X | Rest], Lowest) :-
   lowest(Rest, RestLowest),
   (X < RestLowest -> Lowest = X ; Lowest = RestLowest).
 
+first_part(AllMaps, Seeds) :-
+  apply_all_maps_all_seeds(AllMaps, Seeds, Locations),
+  lowest(Locations, Lowest),
+  string_concat("First part:  ", Lowest, FirstPart),
+  write(FirstPart),
+  write("\n").
+
+get_lowest_in_range(_, 0, _, _) :- fail.
+
+get_lowest_in_range(This, Range, Maps, Lowest) :-
+  Range > 0,
+  apply_all_maps(Maps, This, Location),
+  Next is This + 1,
+  NextRange is Range - 1,
+
+  (get_lowest_in_range(Next, NextRange, Maps, NextLowest) ->
+    (Location < NextLowest -> Lowest = Location ; Lowest = NextLowest);
+    Lowest = Location
+  ).
+
+get_lowest_in_ranges([], _, _) :- fail.
+
+get_lowest_in_ranges([From, Range | Rest], Maps, Lowest) :-
+  get_lowest_in_range(From, Range, Maps, ThisLowest),
+  (get_lowest_in_ranges(Rest, Maps, NextLowest) ->
+    (ThisLowest < NextLowest -> Lowest = ThisLowest ; Lowest = NextLowest);
+    Lowest = ThisLowest
+  ).
+
+second_part(AllMaps, Seeds) :-
+  get_lowest_in_ranges(Seeds, AllMaps, Lowest),
+  string_concat("Second part: ", Lowest, SecondPart),
+  write(SecondPart),
+  write("\n").
+
 main :-
-  read_file_to_string("inputs/input", File),
+  read_file_to_string("inputs/stress", File),
   split_string_into_lines(File, Lines),
   split_seed_and_maps(Lines, SeedLine, MapLines),
   string_concat("seeds: ", SeedlessSeedLine, SeedLine),
@@ -126,11 +161,6 @@ main :-
   AllMapLines = [SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines],
   parse_all_maps(AllMapLines, AllMaps),
 
-  apply_all_maps_all_seeds(AllMaps, Seeds, Locations),
-
-  lowest(Locations, Lowest),
-
-  string_concat("First part:  ", Lowest, FirstPart),
-  write(FirstPart),
-  write("\n"),
+  first_part(AllMaps, Seeds),
+  second_part(AllMaps, Seeds),
   halt.
