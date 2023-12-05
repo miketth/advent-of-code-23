@@ -139,8 +139,20 @@ get_lowest_in_ranges([From, Range | Rest], Maps, Lowest) :-
   get_lowest_in_ranges(Rest, Maps, NextLowest),
   (ThisLowest < NextLowest -> Lowest = ThisLowest ; Lowest = NextLowest).
 
+list_to_ranges([], []).
+list_to_ranges([From, Range | Rest], [range(From, Range) | RestOfRanges]) :-
+  list_to_ranges(Rest, RestOfRanges).
+
+get_lowest_in_range_maplist(Maps, range(From, Range), Lowest) :-
+  write("processing "),
+  write(range(From, Range)),
+  write("\n"),
+  get_lowest_in_range(From, Range, Maps, Lowest).
+
 second_part(AllMaps, Seeds) :-
-  get_lowest_in_ranges(Seeds, AllMaps, Lowest),
+  list_to_ranges(Seeds, SeedsAsRanges),
+  concurrent_maplist(get_lowest_in_range_maplist(AllMaps), SeedsAsRanges, LowestInRanges),
+  lowest(LowestInRanges, Lowest),
   string_concat("Second part: ", Lowest, SecondPart),
   write(SecondPart),
   write("\n").
@@ -171,7 +183,7 @@ process_all_maps([Map|Rest], [ProcessedMap|RestOfProcessedMaps]) :-
   process_all_maps(Rest, RestOfProcessedMaps).
 
 main :-
-  read_file_to_string("inputs/stress", File),
+  read_file_to_string("inputs/input", File),
   split_string_into_lines(File, Lines),
   split_seed_and_maps(Lines, SeedLine, MapLines),
   string_concat("seeds: ", SeedlessSeedLine, SeedLine),
