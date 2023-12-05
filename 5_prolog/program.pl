@@ -85,17 +85,14 @@ parse_all_maps([Map|Rest], [ParsedMap|RestOfParsedMaps]) :-
   parse_map(Map, ParsedMap),
   parse_all_maps(Rest, RestOfParsedMaps).
 
-get_next_num_by_rules([Rule|MoreRules], Current, Next) :-
-  apply_rule(Rule, Current, Next);
-  get_next_num_by_rules(MoreRules, Current, Next).
+get_next_num([Rule|MoreRules], Current, Next) :-
+  (apply_rule(Rule, Current, Next), !);
+  (get_next_num(MoreRules, Current, Next), !).
 
-get_next_num(Rules, Current, Next) :-
-  (get_next_num_by_rules(Rules, Current, NextByRules) -> Next = NextByRules ; Next = Current).
-
-apply_rule(rule(From, To, Range), Current, Next) :-
-  UpperBound is From + Range,
+apply_rule(rule(From, To, _), Current, Next) :-
+  %UpperBound is From + Range,
   Current >= From,
-  Current < UpperBound,
+  %Current < UpperBound,
   Delta is To - From,
   Next is Current + Delta.
 
@@ -121,7 +118,7 @@ first_part(AllMaps, Seeds) :-
   write(FirstPart),
   write("\n").
 
-get_lowest_in_range(_, 0, _, _) :- fail.
+get_lowest_in_range(_, 0, _, inf).
 
 get_lowest_in_range(This, Range, Maps, Lowest) :-
   Range > 0,
@@ -129,19 +126,15 @@ get_lowest_in_range(This, Range, Maps, Lowest) :-
   Next is This + 1,
   NextRange is Range - 1,
 
-  (get_lowest_in_range(Next, NextRange, Maps, NextLowest) ->
-    (Location < NextLowest -> Lowest = Location ; Lowest = NextLowest);
-    Lowest = Location
-  ).
+  get_lowest_in_range(Next, NextRange, Maps, NextLowest),
+  (Location < NextLowest -> Lowest = Location ; Lowest = NextLowest).
 
-get_lowest_in_ranges([], _, _) :- fail.
-
+get_lowest_in_ranges([], _, inf).
 get_lowest_in_ranges([From, Range | Rest], Maps, Lowest) :-
+  write("processing range\n"),
   get_lowest_in_range(From, Range, Maps, ThisLowest),
-  (get_lowest_in_ranges(Rest, Maps, NextLowest) ->
-    (ThisLowest < NextLowest -> Lowest = ThisLowest ; Lowest = NextLowest);
-    Lowest = ThisLowest
-  ).
+  get_lowest_in_ranges(Rest, Maps, NextLowest),
+  (ThisLowest < NextLowest -> Lowest = ThisLowest ; Lowest = NextLowest).
 
 second_part(AllMaps, Seeds) :-
   get_lowest_in_ranges(Seeds, AllMaps, Lowest),
@@ -149,8 +142,33 @@ second_part(AllMaps, Seeds) :-
   write(SecondPart),
   write("\n").
 
+compare_rules(Result, rule(From1, _, _), rule(From2, _, _)) :- compare(Result, From1, From2).
+
+add_min_boundary(Map, MapWithMinBoundary) :-
+  [rule(From, _, _) | _] = Map,
+  (From = 0 ->
+    MapWithMinBoundary = Map ;
+    MapWithMinBoundary = [rule(0, 0, From) | Map]
+  ).
+
+add_max_boundary(Map, [NewRule | Map]) :-
+  [rule(From, _, Range) | _] = Map,
+  NewFrom is From + Range,
+  NewRule = rule(NewFrom, NewFrom, _).
+
+process_map(Map, ProcessedMap) :-
+  predsort(compare_rules, Map, SortedMap),
+  add_min_boundary(SortedMap, MapWithMinBoundary),
+  reverse(MapWithMinBoundary, ReversedMap),
+  add_max_boundary(ReversedMap, ProcessedMap).
+
+process_all_maps([], []).
+process_all_maps([Map|Rest], [ProcessedMap|RestOfProcessedMaps]) :-
+  process_map(Map, ProcessedMap),
+  process_all_maps(Rest, RestOfProcessedMaps).
+
 main :-
-  read_file_to_string("inputs/stress", File),
+  read_file_to_string("inputs/input", File),
   split_string_into_lines(File, Lines),
   split_seed_and_maps(Lines, SeedLine, MapLines),
   string_concat("seeds: ", SeedlessSeedLine, SeedLine),
@@ -160,7 +178,10 @@ main :-
   extract_maps(MapLines, SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines),
   AllMapLines = [SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines],
   parse_all_maps(AllMapLines, AllMaps),
+  process_all_maps(AllMaps, ProcessedAllMaps),
+  !,
 
-  first_part(AllMaps, Seeds),
-  second_part(AllMaps, Seeds),
+  first_part(ProcessedAllMaps, Seeds),
+  !,
+  second_part(ProcessedAllMaps, Seeds),
   halt.
