@@ -144,9 +144,7 @@ list_to_ranges([From, Range | Rest], [range(From, Range) | RestOfRanges]) :-
   list_to_ranges(Rest, RestOfRanges).
 
 get_lowest_in_range_maplist(Maps, range(From, Range), Lowest) :-
-  write("processing "),
-  write(range(From, Range)),
-  write("\n"),
+  format('processing range ~w ~w\n', [From, Range]),
   get_lowest_in_range(From, Range, Maps, Lowest).
 
 second_part(AllMaps, Seeds) :-
