@@ -182,6 +182,24 @@ process_all_maps([Map|Rest], [ProcessedMap|RestOfProcessedMaps]) :-
   process_map(Map, ProcessedMap),
   process_all_maps(Rest, RestOfProcessedMaps).
 
+main_ci :-
+  read_file_to_string("inputs/input", File),
+  split_string_into_lines(File, Lines),
+  split_seed_and_maps(Lines, SeedLine, MapLines),
+  string_concat("seeds: ", SeedlessSeedLine, SeedLine),
+  split_string_into_nums(SeedlessSeedLine, Seeds),
+
+
+  extract_maps(MapLines, SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines),
+  AllMapLines = [SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines],
+  parse_all_maps(AllMapLines, AllMaps),
+  process_all_maps(AllMaps, ProcessedAllMaps),
+  !,
+
+  first_part(ProcessedAllMaps, Seeds),
+  write("Second part takes too long to compute, so it's not run in CI\n"),
+  halt.
+
 main :-
   read_file_to_string("inputs/input", File),
   split_string_into_lines(File, Lines),
