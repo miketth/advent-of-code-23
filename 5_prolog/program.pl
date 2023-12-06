@@ -145,11 +145,23 @@ list_to_ranges([From, Range | Rest], [range(From, Range) | RestOfRanges]) :-
 
 get_lowest_in_range_maplist(Maps, range(From, Range), Lowest) :-
   format('processing range ~w ~w\n', [From, Range]),
-  get_lowest_in_range(From, Range, Maps, Lowest).
+  get_lowest_in_range(From, Range, Maps, Lowest),
+  format('lowest in range ~w ~w is ~w\n', [From, Range, Lowest]).
+
+halve_ranges([], []).
+halve_ranges([range(From, Range) | Rest], [ NewRange1, NewRange2 | RestOfNewRanges]) :-
+  HalfRange is Range // 2,
+  Remainder is Range mod 2,
+  NewRange1 = range(From, HalfRange),
+  UpperStart is From + HalfRange,
+  UpperRange is HalfRange + Remainder,
+  NewRange2 = range(UpperStart, UpperRange),
+  halve_ranges(Rest, RestOfNewRanges).
 
 second_part(AllMaps, Seeds) :-
   list_to_ranges(Seeds, SeedsAsRanges),
-  concurrent_maplist(get_lowest_in_range_maplist(AllMaps), SeedsAsRanges, LowestInRanges),
+  halve_ranges(SeedsAsRanges, HalvedRanges),
+  concurrent_maplist(get_lowest_in_range_maplist(AllMaps), HalvedRanges, LowestInRanges),
   lowest(LowestInRanges, Lowest),
   string_concat("Second part: ", Lowest, SecondPart),
   write(SecondPart),
