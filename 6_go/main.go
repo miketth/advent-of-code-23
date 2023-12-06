@@ -28,6 +28,10 @@ func run() error {
 
 	fmt.Printf("First part: %d\n", product)
 
+	bigRace := oneRace(races)
+	wins := calcWinningDistances(bigRace)
+	fmt.Printf("Second part: %d\n", len(wins))
+
 	return nil
 }
 
@@ -97,4 +101,24 @@ func calcWinningDistances(race Race) []int {
 		}
 	}
 	return distances
+}
+
+func oneRace(races []Race) Race {
+	timeDigits := ""
+	distanceDigits := ""
+	for _, race := range races {
+		time := strconv.Itoa(race.Time)
+		distance := strconv.Itoa(race.Distance)
+
+		timeDigits += time
+		distanceDigits += distance
+	}
+
+	time, _ := strconv.Atoi(timeDigits)
+	distance, _ := strconv.Atoi(distanceDigits)
+
+	return Race{
+		Time:     time,
+		Distance: distance,
+	}
 }
