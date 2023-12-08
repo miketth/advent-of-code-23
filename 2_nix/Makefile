@@ -1,9 +1,8 @@
 .PHONY: run
 
 run:
-	nix-instantiate --eval main.nix
+	docker run --rm -it -v $(PWD):/aoc --workdir /aoc nixos/nix nix-instantiate --eval main.nix
 
 setup_ci:
-	curl -L https://nixos.org/nix/install | sh /dev/stdin --daemon --yes
-	nohup /nix/store/*-nix-*/bin/nix-daemon &
+	docker pull nixos/nix
 
