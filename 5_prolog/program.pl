@@ -94,24 +94,26 @@ intersect(rule(RuleFrom, _, RuleLen), range(RangeFrom, RangeLen), Intersecting, 
 
   (IntersectStart =< IntersectEnd ->
     (
+      % intersecting
       IntersectLen is IntersectEnd - IntersectStart + 1,
-      Intersecting = [ range(IntersectStart, IntersectLen) ]
-    );
-    Intersecting = []
-  ),
+      Intersecting = [ range(IntersectStart, IntersectLen) ],
 
-  BeforeLen is min(IntersectStart - RangeFrom, RangeLen),
-  Before = range(RangeFrom, BeforeLen),
+      BeforeLen is min(IntersectStart - RangeFrom, RangeLen),
+      Before = range(RangeFrom, BeforeLen),
 
-  AfterLen is min(RangeEnd - IntersectEnd, RangeLen),
-  After = range(IntersectEnd, AfterLen),
+      AfterLen is min(RangeEnd - IntersectEnd, RangeLen),
+      After = range(IntersectEnd, AfterLen),
 
-  ((BeforeLen > 0, AfterLen > 0) -> NonIntersecting = [Before, After];
-    ((BeforeLen > 0, AfterLen =< 0) -> NonIntersecting = [Before];
-      ((BeforeLen =< 0, AfterLen > 0) -> NonIntersecting = [After];
-        NonIntersecting = []
+      ((BeforeLen > 0, AfterLen > 0) -> NonIntersecting = [Before, After];
+        ((BeforeLen > 0, AfterLen =< 0) -> NonIntersecting = [Before];
+          ((BeforeLen =< 0, AfterLen > 0) -> NonIntersecting = [After];
+            NonIntersecting = []
+          )
+        )
       )
-    )
+    );
+    Intersecting = [],
+    NonIntersecting = [range(RangeFrom, RangeLen)]
   ).
 
 do_apply(_, [], []).
