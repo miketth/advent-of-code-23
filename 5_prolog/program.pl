@@ -85,84 +85,93 @@ parse_all_maps([Map|Rest], [ParsedMap|RestOfParsedMaps]) :-
   parse_map(Map, ParsedMap),
   parse_all_maps(Rest, RestOfParsedMaps).
 
-get_next_num([Rule|MoreRules], Current, Next) :-
-  (apply_rule(Rule, Current, Next), !);
-  (get_next_num(MoreRules, Current, Next), !).
+intersect(rule(RuleFrom, _, RuleLen), range(RangeFrom, RangeLen), Intersecting, NonIntersecting) :-
+  (RuleLen = inf -> RuleEnd = inf; RuleEnd is RuleFrom + RuleLen - 1),
+  RangeEnd is RangeFrom + RangeLen - 1,
 
-apply_rule(rule(From, To, _), Current, Next) :-
-  %UpperBound is From + Range,
-  Current >= From,
-  %Current < UpperBound,
-  Delta is To - From,
-  Next is Current + Delta.
+  IntersectStart is max(RuleFrom, RangeFrom),
+  IntersectEnd is min(RuleEnd, RangeEnd),
 
-apply_all_maps([], Location, Location).
-apply_all_maps([Map|Rest], Seed, Location) :-
-  get_next_num(Map, Seed, NextSeed),
-  apply_all_maps(Rest, NextSeed, Location).
+  (IntersectStart =< IntersectEnd ->
+    (
+      IntersectLen is IntersectEnd - IntersectStart + 1,
+      Intersecting = [ range(IntersectStart, IntersectLen) ]
+    );
+    Intersecting = []
+  ),
 
-apply_all_maps_all_seeds(_, [], []).
-apply_all_maps_all_seeds(Maps, [Seed|Rest], [Location|RestOfLocations]) :-
-  apply_all_maps(Maps, Seed, Location),
-  apply_all_maps_all_seeds(Maps, Rest, RestOfLocations).
+  BeforeLen is min(IntersectStart - RangeFrom, RangeLen),
+  Before = range(RangeFrom, BeforeLen),
 
-lowest([X], X).
-lowest([X | Rest], Lowest) :-
-  lowest(Rest, RestLowest),
-  (X < RestLowest -> Lowest = X ; Lowest = RestLowest).
+  AfterLen is min(RangeEnd - IntersectEnd, RangeLen),
+  After = range(IntersectEnd, AfterLen),
+
+  ((BeforeLen > 0, AfterLen > 0) -> NonIntersecting = [Before, After];
+    ((BeforeLen > 0, AfterLen =< 0) -> NonIntersecting = [Before];
+      ((BeforeLen =< 0, AfterLen > 0) -> NonIntersecting = [After];
+        NonIntersecting = []
+      )
+    )
+  ).
+
+do_apply(_, [], []).
+do_apply(Rule, [range(RangeFrom, RangeLen) | Ranges], [range(NewRangeFrom, RangeLen) | NewRanges]) :-
+  rule(RuleFrom, RuleTo, _) = Rule,
+  Delta is RuleTo - RuleFrom,
+  NewRangeFrom is RangeFrom + Delta,
+  do_apply(Rule, Ranges, NewRanges).
+
+apply_rules_ranges(_, [], []).
+apply_rules_ranges(Rules, [Range | Ranges], OutRanges) :-
+  apply_rules(Rules, Range, NewRanges),
+  append(NewRanges, RestOfNewRanges, OutRanges),
+  apply_rules_ranges(Rules, Ranges, RestOfNewRanges), !.
+
+% for all rules: apply to appropriate part of range, mayhaps none at all, produce new range(s).
+apply_rules([], Range, [Range]).
+apply_rules([Rule|Rules], Range, NewRanges) :-
+  intersect(Rule, Range, Intersecting, NonIntersecting),
+  % apply this rule on intersection
+  do_apply(Rule, Intersecting, Applied), !,
+
+  append(Applied, RestApplied, NewRanges),
+  % apply rest of rules on non-intersecting ranges
+  apply_rules_ranges(Rules, NonIntersecting, RestApplied).
+
+
+apply_maps_ranges([], Ranges, Ranges).
+apply_maps_ranges([Rules | Maps], Ranges, OutRanges) :-
+  apply_rules_ranges(Rules, Ranges, Applied),
+  apply_maps_ranges(Maps, Applied, OutRanges).
+
+seeds_to_ranges([], []).
+seeds_to_ranges([Seed | Seeds], [Range | Ranges]) :-
+  Range = range(Seed, 1),
+  seeds_to_ranges(Seeds, Ranges).
+
+lowest_range_helper([], Lowest, Lowest).
+lowest_range_helper([range(Start, _) | Ranges], LowestSoFar, Lowest) :-
+  (Start < LowestSoFar -> NewLowest = Start; NewLowest = LowestSoFar),
+  lowest_range_helper(Ranges, NewLowest, Lowest).
+
+lowest_range(Ranges, Lowest) :- lowest_range_helper(Ranges, inf, Lowest).
 
 first_part(AllMaps, Seeds) :-
-  apply_all_maps_all_seeds(AllMaps, Seeds, Locations),
-  lowest(Locations, Lowest),
+  seeds_to_ranges(Seeds, Ranges),
+  apply_maps_ranges(AllMaps, Ranges, AppliedRanges),
+  lowest_range(AppliedRanges, Lowest),
   string_concat("First part:  ", Lowest, FirstPart),
   write(FirstPart),
   write("\n").
-
-get_lowest_in_range_helper(_, 0, _, Lowest, Lowest).
-
-get_lowest_in_range_helper(This, Range, Maps, LowestSoFar, Lowest) :-
-  Range > 0,
-  apply_all_maps(Maps, This, Location),
-  Next is This + 1,
-  NextRange is Range - 1,
-
-  (Location < LowestSoFar -> NextLowest = Location ; NextLowest = LowestSoFar),
-  get_lowest_in_range_helper(Next, NextRange, Maps, NextLowest, Lowest).
-
-get_lowest_in_range(This, Range, Maps, Lowest) :-
-  get_lowest_in_range_helper(This, Range, Maps, inf, Lowest).
-
-get_lowest_in_ranges([], _, inf).
-get_lowest_in_ranges([From, Range | Rest], Maps, Lowest) :-
-  write("processing range\n"),
-  get_lowest_in_range(From, Range, Maps, ThisLowest),
-  get_lowest_in_ranges(Rest, Maps, NextLowest),
-  (ThisLowest < NextLowest -> Lowest = ThisLowest ; Lowest = NextLowest).
 
 list_to_ranges([], []).
 list_to_ranges([From, Range | Rest], [range(From, Range) | RestOfRanges]) :-
   list_to_ranges(Rest, RestOfRanges).
 
-get_lowest_in_range_maplist(Maps, range(From, Range), Lowest) :-
-  format('processing range ~w ~w\n', [From, Range]),
-  get_lowest_in_range(From, Range, Maps, Lowest),
-  format('lowest in range ~w ~w is ~w\n', [From, Range, Lowest]).
-
-halve_ranges([], []).
-halve_ranges([range(From, Range) | Rest], [ NewRange1, NewRange2 | RestOfNewRanges]) :-
-  HalfRange is Range // 2,
-  Remainder is Range mod 2,
-  NewRange1 = range(From, HalfRange),
-  UpperStart is From + HalfRange,
-  UpperRange is HalfRange + Remainder,
-  NewRange2 = range(UpperStart, UpperRange),
-  halve_ranges(Rest, RestOfNewRanges).
-
 second_part(AllMaps, Seeds) :-
-  list_to_ranges(Seeds, SeedsAsRanges),
-  halve_ranges(SeedsAsRanges, HalvedRanges),
-  concurrent_maplist(get_lowest_in_range_maplist(AllMaps), HalvedRanges, LowestInRanges),
-  lowest(LowestInRanges, Lowest),
+  list_to_ranges(Seeds, Ranges),
+  apply_maps_ranges(AllMaps, Ranges, Applied),
+  lowest_range(Applied, Lowest),
   string_concat("Second part: ", Lowest, SecondPart),
   write(SecondPart),
   write("\n").
@@ -179,7 +188,7 @@ add_min_boundary(Map, MapWithMinBoundary) :-
 add_max_boundary(Map, [NewRule | Map]) :-
   [rule(From, _, Range) | _] = Map,
   NewFrom is From + Range,
-  NewRule = rule(NewFrom, NewFrom, _).
+  NewRule = rule(NewFrom, NewFrom, inf).
 
 process_map(Map, ProcessedMap) :-
   predsort(compare_rules, Map, SortedMap),
@@ -191,24 +200,6 @@ process_all_maps([], []).
 process_all_maps([Map|Rest], [ProcessedMap|RestOfProcessedMaps]) :-
   process_map(Map, ProcessedMap),
   process_all_maps(Rest, RestOfProcessedMaps).
-
-main_ci :-
-  read_file_to_string("inputs/input", File),
-  split_string_into_lines(File, Lines),
-  split_seed_and_maps(Lines, SeedLine, MapLines),
-  string_concat("seeds: ", SeedlessSeedLine, SeedLine),
-  split_string_into_nums(SeedlessSeedLine, Seeds),
-
-
-  extract_maps(MapLines, SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines),
-  AllMapLines = [SeedToSoilLines, SoilToFertilizerLines, FertilizerToWaterLines, WaterToLightLines, LightToTemperatureLines, TemperatureToHumidityLines, HumidityToLocationLines],
-  parse_all_maps(AllMapLines, AllMaps),
-  process_all_maps(AllMaps, ProcessedAllMaps),
-  !,
-
-  first_part(ProcessedAllMaps, Seeds),
-  write("Second part takes too long to compute, so it's not run in CI\n"),
-  halt.
 
 main :-
   read_file_to_string("inputs/input", File),
