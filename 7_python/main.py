@@ -79,7 +79,7 @@ def parse_file(lines: List[str]) -> List[Hand]:
     return hands
 
 
-def card1_less_powerful(card_strength_list: list[str], card1: str, card2: str) -> int:
+def card1_less_powerful(card_strength_list: List[str], card1: str, card2: str) -> int:
     return card_strength_list.index(card1) - card_strength_list.index(card2)
 
 
