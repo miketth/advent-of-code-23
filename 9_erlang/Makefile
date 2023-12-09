@@ -5,13 +5,13 @@ ERLCFLAGS=-o build
 SOURCES=$(wildcard src/*.erl)
 
 run: compile
-	mkdir -p build
 	erl -pa build -noshell -s main start -s init stop
 
 debug: compile
 	erl -pa build
 
 compile:
+	mkdir -p build
 	$(ERLC) $(ERLCFLAGS) $(SOURCES)
 
 clean:
