@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
             .flatten()
 
     val start = vertices.first { it.isStart }
-    val graph = processVertices(vertices, start)
+    val graph = processVertices(vertices)
     val distances = graph.bfs(start.coords)
     val maxDistance = distances.maxOfOrNull { it.second }
     println("First part: $maxDistance")
@@ -116,8 +116,7 @@ class Graph {
     }
 }
 
-fun processVertices(vertices: List<PossibleVertex>, start: PossibleVertex): Graph {
-    val vertexMap = vertices.associateBy { it.coords }
+fun processVertices(vertices: List<PossibleVertex>): Graph {
     val graph = Graph()
 
     vertices.forEach {
