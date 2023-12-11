@@ -17,50 +17,57 @@ public class AoC {
         return lines;
     }
 
-    int solve() throws Exception {
+    long solveForExpansion(int expansionSize) throws Exception {
         var lines = readFile();
 
-        var doubledLines = new ArrayList<String>();
-        for (var line : lines) {
-            if (line.isBlank()) {
-                continue;
-            }
-
+        var expandedLineIndexes = new HashMap<Integer, Long>();
+        var lastLineIndex = 0L;
+        for (var i = 0; i < lines.size(); i++) {
+            var line = lines.get(i);
             var noStars = line.chars().allMatch(by -> by == '.');
             if (noStars) {
-                doubledLines.add(line);
+                lastLineIndex += expansionSize;
+            } else {
+                expandedLineIndexes.put(i, lastLineIndex);
+                lastLineIndex++;
             }
-            doubledLines.add(line);
         }
 
-        var rowsToDouble = new ArrayList<Integer>();
-        var rowSize = doubledLines.get(0).length();
+        var expandedColumnIndexes = new HashMap<Integer, Long>();
+        var rowSize = lines.get(0).length();
+        var lastColumnIndex = 0L;
         for (var i = 0; i < rowSize; i++) {
-            int finalI = i;
-            var rowIsEmpty = doubledLines.stream()
-                    .map(line -> line.charAt(finalI))
-                    .allMatch(it -> it.equals('.'));
-            if (rowIsEmpty) {
-                rowsToDouble.add(0, i);
+            var allEmpty = true;
+            for (var line : lines) {
+                var ch = line.charAt(i);
+                if (ch == '#') {
+                    allEmpty = false;
+                    break;
+                }
             }
-        }
-        List<String> grownMap = doubledLines;
-        for (var row : rowsToDouble) {
-            grownMap = grownMap.stream().map(line -> line.substring(0, row) + "." + line.substring(row)).toList();
+
+            if (allEmpty) {
+                lastColumnIndex += expansionSize;
+            } else {
+                expandedColumnIndexes.put(i, lastColumnIndex);
+                lastColumnIndex++;
+            }
         }
 
         var galaxies = new ArrayList<Coordinate>();
-        for (var y = 0; y < grownMap.size(); y++) {
-            var line = grownMap.get(y);
+        for (var y = 0; y < lines.size(); y++) {
+            var line = lines.get(y);
             for (var x = 0; x < line.length(); x++) {
                 var ch = line.charAt(x);
                 if (ch == '#') {
-                    galaxies.add(new Coordinate(x, y));
+                    var realY = expandedLineIndexes.get(y);
+                    var realX = expandedColumnIndexes.get(x);
+                    galaxies.add(new Coordinate(realX, realY));
                 }
             }
         }
 
-        var sum = 0;
+        var sum = 0L;
         for (var i = 0; i < galaxies.size(); i++) {
             var galaxy1 = galaxies.get(i);
             for (var j = i+1; j < galaxies.size(); j++) {
@@ -74,18 +81,20 @@ public class AoC {
     }
 
     void start() throws Exception {
-        var first = solve();
-        System.out.printf("First part: %s\n", first);
+        var first = solveForExpansion(2);
+        System.out.printf("First part: %d\n", first);
+        var second = solveForExpansion(1_000_000);
+        System.out.printf("Second part: %d\n", second);
     }
 
     class Coordinate {
-        public int x = 0;
-        public int y = 0;
-        public Coordinate(int x, int y) {
+        public long x = 0;
+        public long y = 0;
+        public Coordinate(long x, long y) {
             this.x = x;
             this.y = y;
         }
-        public int distanceTo(Coordinate coords) {
+        public long distanceTo(Coordinate coords) {
             return Math.abs(coords.x - x) + Math.abs(coords.y - y);
         }
     }
