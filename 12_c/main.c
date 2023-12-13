@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-const char* filename = "inputs/input";
+const char* filename = "inputs/example";
 
 void read_file(char*** lines, int* num_lines) {
     *num_lines = 0;
@@ -29,6 +29,7 @@ void read_file(char*** lines, int* num_lines) {
         *lines = realloc(*lines, *num_lines * sizeof(char*));
         (*lines)[*(num_lines) - 1] = line_copy;
     }
+    free(line);
 
     fclose(file);
 }
@@ -258,6 +259,13 @@ int main() {
     }
 
     printf("First part: %d\n", sum);
+
+    for (int i = 0; i < num_lines; i++) {
+        free(parsed_lines[i].springs);
+        free(parsed_lines[i].num_list);
+    }
+
+    free(parsed_lines);
 
     return 0;
 }
