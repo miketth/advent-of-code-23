@@ -9,18 +9,30 @@ async function readFile(): Promise<string[][]> {
         .filter((lines) => lines.length > 0);
 }
 
-function isLineMirrored(line: string, mirrorPoint: number): boolean {
+function lineMirrorErrors(line: string, mirrorPoint: number): number {
     const leftPart = line.slice(0, mirrorPoint);
     const rightPart = line.slice(mirrorPoint);
     const rightReversed = rightPart.split('').reverse().join('');
     const minLineLength = Math.min(leftPart.length, rightPart.length);
-    return leftPart.slice(-minLineLength) === rightReversed.slice(-minLineLength);
+
+    const leftCut = leftPart.slice(-minLineLength);
+    const rightCut = rightReversed.slice(-minLineLength);
+
+    let diff = 0;
+    for (let i = 0; i < minLineLength; i++) {
+        if (leftCut[i] != rightCut[i]) {
+            diff++;
+        }
+    }
+    return diff;
 }
 
-function findVerticalMirrorColumn(block: string[]): number {
+function findVerticalMirrorColumnWithError(block: string[], error = 0): number {
     const lineLength = block[0].length;
     for (let mirrorColumn = 1; mirrorColumn < lineLength; mirrorColumn++) {
-        if (block.every((line) => isLineMirrored(line, mirrorColumn))) {
+        let sumErrors = block.reduce((sum, line) => sum + lineMirrorErrors(line, mirrorColumn), 0);
+
+        if (sumErrors == error) {
             return mirrorColumn;
         }
     }
@@ -36,21 +48,28 @@ function transpose(block: string[]): string[] {
     return newBlock;
 }
 
+function getScoreSumWithErrorCount(blocks: string[][], errors = 0): number {
+    let sum = 0;
+    blocks.forEach((block) => {
+        const vertical = findVerticalMirrorColumnWithError(block, errors);
+        if (vertical != -1) {
+            sum += vertical;
+        }
+
+        const horizontal = findVerticalMirrorColumnWithError(transpose(block), errors);
+        if (horizontal != -1) {
+            sum += horizontal*100;
+        }
+    });
+    return sum;
+}
+
 const blocks = await readFile()
 
-let sum = 0;
+const firstPart = getScoreSumWithErrorCount(blocks);
 
-blocks.forEach((block) => {
-    const vertical = findVerticalMirrorColumn(block);
-    if (vertical != -1) {
-        sum += vertical;
-    }
+console.log(`First part: ${firstPart}`);
 
-    const horizontal = findVerticalMirrorColumn(transpose(block));
-    if (horizontal != -1) {
-        sum += horizontal*100;
-    }
-});
+const secondPart = getScoreSumWithErrorCount(blocks, 1);
 
-console.log(`First part: ${sum}`);
-
+console.log(`Second part: ${secondPart}`);
