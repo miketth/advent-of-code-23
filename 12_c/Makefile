@@ -12,4 +12,5 @@ $(BUILD_DIR)/Makefile:
 build: $(BUILD_DIR)/Makefile
 	$(MAKE) -C $(BUILD_DIR)
 
-
+setup_ci:
+	true
