@@ -1,0 +1,20 @@
+{
+  "name": "aoc",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest",
+    "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "run": "bun index.ts",
+    "build": "tsc",
+    "node_run": "node dist/index.js"
+  },
+  "dependencies": {
+    "@types/node": "^20.10.4"
+  }
+}

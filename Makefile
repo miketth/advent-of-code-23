@@ -1,6 +1,6 @@
 .PHONY: run
 
-days=1_elixir 2_nix 3_haskell 4_rust 5_prolog 6_go 7_python 8_zsh 9_erlang 10_kotlin 11_java 12_c
+days=1_elixir 2_nix 3_haskell 4_rust 5_prolog 6_go 7_python 8_zsh 9_erlang 10_kotlin 11_java 12_c 13_typescript
 
 define run_day
 	echo "Running $(1)"
