@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-const char* filename = "inputs/example";
+const char* filename = "inputs/input";
 
 void read_file(char*** lines, int* num_lines) {
     *num_lines = 0;
@@ -103,7 +103,7 @@ int* group_counts(char* springs) {
     int num_counts = 0;
 
     int curr_len = 0;
-    for (int i = 0; i < strlen(springs); i++) {
+    for (size_t i = 0; i < strlen(springs); i++) {
         if (springs[i] == '#') {
             curr_len++;
         } else {
@@ -130,7 +130,7 @@ int* group_counts(char* springs) {
 
 int count_char(char* str, char c) {
     int count = 0;
-    for (int i = 0; i < strlen(str); i++) {
+    for (size_t i = 0; i < strlen(str); i++) {
         if (str[i] == c) {
             count++;
         }
@@ -201,7 +201,7 @@ bool num_list_eq(int* list1, int* list2) {
 char* substitute_q(char* springs, char* permutation) {
     char* new_springs = malloc((strlen(springs) + 1) * sizeof(char));
     int subs_idx = 0;
-    for (int spring_idx = 0; spring_idx < strlen(springs); spring_idx++) {
+    for (size_t spring_idx = 0; spring_idx < strlen(springs); spring_idx++) {
         if (springs[spring_idx] == '?') {
             new_springs[spring_idx] = permutation[subs_idx++];
         } else {
